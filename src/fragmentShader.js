@@ -8,6 +8,13 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
     vec4 color = texture2D(inputBuffer, uvPixel);
 
     float luma = dot(vec3(0.2126, 0.7152, 0.0722), color.rgb);
+    
+    // Only show pixels where there's actual content (luma above threshold or alpha > 0)
+    // This prevents dots from appearing on transparent/black backgrounds
+    if (luma < 0.01 && color.a < 0.01) {
+        outputColor = vec4(0.0, 0.0, 0.0, 0.0);
+        return;
+    }
 
     vec2 cellUV = fract(uv / normalizedPixelSize);
 
@@ -22,7 +29,9 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
     vec3 whiteColor = vec3(1.0, 1.0, 1.0);
     
     // Apply the circle mask with white color based on luminance
-    outputColor = vec4(whiteColor * circleMask * max(luma, 0.05), 1.0);
+    // Only show if there's actual content
+    float finalLuma = max(luma, 0.05);
+    outputColor = vec4(whiteColor * circleMask * finalLuma, color.a > 0.01 ? 1.0 : 0.0);
 }
 `;
 
